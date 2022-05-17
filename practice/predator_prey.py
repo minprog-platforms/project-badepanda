@@ -51,6 +51,7 @@ class PreyAgent(Agent):
                     count_predator += 1
             if count_food > 0 and count_predator < 1:
                 steps.append(step)
+            
         
         if len(steps) < 1:
             steps = possible_steps
@@ -75,7 +76,7 @@ class PreyAgent(Agent):
         for other in cellmates:
             if isinstance(other, PreyAgent):
                 P = random.random()
-                if P > 0.98 and self.model.num_agents <= self.model.max_num:
+                if P > 0.99 and self.model.num_agents <= self.model.max_num:
                     self.model.num_agents += 1
                     animal = PreyAgent(self.model.num_agents, self.model)
                     self.model.schedule.add(animal)
@@ -132,7 +133,7 @@ class PredatorAgent(Agent):
         for other in cellmates:
             if isinstance(other, PredatorAgent):
                 P = random.random()
-                if P > 0.98 and self.model.num_agents <= self.model.max_num:
+                if P > 0.99 and self.model.num_agents <= self.model.max_num:
                     self.model.num_agents += 1
                     animal = PredatorAgent(self.model.num_agents, self.model)
                     self.model.schedule.add(animal)
@@ -157,7 +158,7 @@ class ForestModel(Model):
         self.num_agents = self.num_animals + self.num_food
         self.max_num = width * height
         animals = ['prey', 'predator']
-        # Create agents
+
         for i in range(self.num_animals):
             animal_type = self.random.choices(animals,weights=weights, k=1).pop()
             if animal_type == 'prey':
@@ -166,7 +167,7 @@ class ForestModel(Model):
                 animal = PredatorAgent(i, self)
             
             self.schedule.add(animal)
-            # Add the agent to a random grid cell
+
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
             self.grid.place_agent(animal, (x, y))
