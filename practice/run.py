@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.animation as animation
 from matplotlib import colors, image
 
-model = ForestModel(300, 100, 100, [90,10],500)
+model = ForestModel(30, 10, 10, [90,10], 50)
 for i in range(100):
     model.step()
     prey = 0
@@ -19,4 +19,4 @@ for i in range(100):
                 predator += 1
             elif isinstance(animal,FoodAgent):
                 food += 1
-    # print(prey, predator, food)
+    print(prey,predator,food)

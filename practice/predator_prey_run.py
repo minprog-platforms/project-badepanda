@@ -11,6 +11,7 @@ def barlist(n):
         model.step()
         prey = 0
         predator = 0
+        food = 0
         for cell in model.grid.coord_iter():
             cell_content, x, y = cell
             for animal in cell_content:
@@ -18,18 +19,21 @@ def barlist(n):
                     prey += 1
                 elif isinstance(animal, PredatorAgent):
                     predator += 1
-    return prey, predator
+                elif isinstance(animal, FoodAgent):
+                    food += 1
+    print(prey,predator,food)
+    return prey, predator, food
 
 fig=plt.figure()
 
 n=10000 #Number of frames
-x=['Prey', 'Predator']
+x=['Prey', 'Predator', 'Food']
 barcollection = plt.bar(x,barlist(1))
 
 def animate(i):
     y=barlist(i+1)
-    for i, b in enumerate(barcollection):
-        b.set_height(y[i])
+    for i in range(len(barcollection)):
+        barcollection[i].set_height(y[i])
 
 anim=animation.FuncAnimation(fig,animate,repeat=False,blit=False,frames=n,interval=100)
 
