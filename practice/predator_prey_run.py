@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.animation as animation
 from matplotlib import colors, image
 
-model = ForestModel(300, 100, 100, [90,10],500)
+model = ForestModel(300, 100, 100, [85,15],500)
 
 def barlist(n): 
     for i in range(n):

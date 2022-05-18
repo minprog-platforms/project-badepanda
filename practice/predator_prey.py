@@ -5,7 +5,6 @@ from mesa.datacollection import DataCollector
 from mesa.batchrunner import batch_run
 import random
 
-from numpy import isin
 
 class FoodAgent(Agent):
     def __init__(self, unique_id, model):
@@ -20,7 +19,7 @@ class FoodAgent(Agent):
 
     def procreate(self):
         P = random.random()
-        if P > 0.99 and self.model.num_agents <= self.model.max_num:
+        if P > 0.989 and self.model.num_agents <= self.model.max_num:
             self.model.num_agents += 1
             food = FoodAgent(self.model.num_agents, self.model)
             self.model.schedule.add(food)
@@ -49,7 +48,7 @@ class PreyAgent(Agent):
                     count_food += 1
                 elif isinstance(agent, PredatorAgent):
                     count_predator += 1
-            if count_food > 0 and count_predator < 1:
+            if count_food > 0 and count_predator < count_food:
                 steps.append(step)
             
         
@@ -76,7 +75,7 @@ class PreyAgent(Agent):
         for other in cellmates:
             if isinstance(other, PreyAgent):
                 P = random.random()
-                if P > 0.99 and self.model.num_agents <= self.model.max_num:
+                if P > 0.98 and self.model.num_agents <= self.model.max_num:
                     self.model.num_agents += 1
                     animal = PreyAgent(self.model.num_agents, self.model)
                     self.model.schedule.add(animal)
@@ -122,7 +121,7 @@ class PredatorAgent(Agent):
         for other in cellmates:
             if isinstance(other, PreyAgent) and other not in self.model.kill_list:
                 self.model.kill_list.append(other)
-                self.dead_time = 25
+                self.dead_time = 50
 
     def dead(self):
         if self.dead_time < 1 and self not in self.model.kill_list:
@@ -133,7 +132,7 @@ class PredatorAgent(Agent):
         for other in cellmates:
             if isinstance(other, PredatorAgent):
                 P = random.random()
-                if P > 0.99 and self.model.num_agents <= self.model.max_num:
+                if P > 0.989 and self.model.num_agents <= self.model.max_num:
                     self.model.num_agents += 1
                     animal = PredatorAgent(self.model.num_agents, self.model)
                     self.model.schedule.add(animal)
