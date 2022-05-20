@@ -13,7 +13,7 @@ class FoodAgent(Agent):
 class MannetjeAgent(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        self.energie = 5
+        self.energie = 10
         # self.gen1 = gen1
         # self.gen2 = gen2
         # self.gen3 = gen3
@@ -111,7 +111,7 @@ class WorldModel(Model):
                     if agent.has_eaten == 0 and agent not in self.kill_list:
                         self.kill_list.append(agent)
                     elif agent.has_eaten == 1:
-                        agent.energie = 5
+                        agent.energie = 10
                         agent.has_eaten = 0
                         R = random.randint(0,1)
                         if R == 1:
@@ -121,17 +121,17 @@ class WorldModel(Model):
                             x = random.choice([0, self.grid.width - 1])
                             y = self.random.randrange(self.grid.height)
                         self.grid.move_agent(agent, (x,y))
-                    # elif agent.has_eaten >= 2:
-                    #     agent.energie = 5
-                    #     agent.has_eaten = 0
-                    #     R = random.randint(0,1) 
-                    #     if R == 1:
-                    #         x = self.random.randrange(self.grid.width)
-                    #         y = random.choice([0, self.grid.height - 1])
-                    #     elif R == 0:
-                    #         x = random.choice([0, self.grid.width - 1])
-                    #         y = self.random.randrange(self.grid.height)
-                        # self.grid.move_agent(agent, (x,y))
+                    elif agent.has_eaten >= 2:
+                        agent.energie = 10
+                        agent.has_eaten = 0
+                        R = random.randint(0,1) 
+                        if R == 1:
+                            x = self.random.randrange(self.grid.width)
+                            y = random.choice([0, self.grid.height - 1])
+                        elif R == 0:
+                            x = random.choice([0, self.grid.width - 1])
+                            y = self.random.randrange(self.grid.height)
+                        self.grid.move_agent(agent, (x,y))
                         self.num_agents += 1
                         mannentje = MannetjeAgent(self.num_agents, self)
                         self.schedule.add(mannentje)
