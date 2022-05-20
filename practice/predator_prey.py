@@ -27,8 +27,9 @@ class FoodAgent(Agent):
 
     def step(self):
         self.excist()
-        self.procreate()
         self.dead()
+        self.procreate()
+
 class PreyAgent(Agent):
     """An agent with fixed initial wealth."""
 
@@ -75,7 +76,7 @@ class PreyAgent(Agent):
         for other in cellmates:
             if isinstance(other, PreyAgent):
                 P = random.random()
-                if P > 0.98 and self.model.num_agents <= self.model.max_num:
+                if P > 0.98 and self.model.num_agents <= self.model.max_num and other not in self.model.kill_list:
                     self.model.num_agents += 1
                     animal = PreyAgent(self.model.num_agents, self.model)
                     self.model.schedule.add(animal)
@@ -85,8 +86,8 @@ class PreyAgent(Agent):
     def step(self):
         self.move()
         self.eat()
-        self.procreate()
         self.dead()
+        self.procreate()
 
 class PredatorAgent(Agent):
     """An agent with fixed initial wealth."""
@@ -132,7 +133,7 @@ class PredatorAgent(Agent):
         for other in cellmates:
             if isinstance(other, PredatorAgent):
                 P = random.random()
-                if P > 0.989 and self.model.num_agents <= self.model.max_num:
+                if P > 0.989 and self.model.num_agents <= self.model.max_num and other not in self.model.kill_list:
                     self.model.num_agents += 1
                     animal = PredatorAgent(self.model.num_agents, self.model)
                     self.model.schedule.add(animal)
@@ -142,8 +143,8 @@ class PredatorAgent(Agent):
     def step(self):
         self.move()
         self.eat()
-        self.procreate()
         self.dead()
+        self.procreate()
 
 class ForestModel(Model):
     """A model with some number of agents."""

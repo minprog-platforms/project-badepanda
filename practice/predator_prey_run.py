@@ -21,7 +21,7 @@ def barlist(n):
                     predator += 1
                 elif isinstance(animal, FoodAgent):
                     food += 1
-    print(prey,predator,food)
+    # print(prey,predator,food)
     return prey, predator, food
 
 fig=plt.figure()

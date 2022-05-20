@@ -90,7 +90,7 @@ class Grid:
 
 
 if __name__ == "__main__":
-    grid = Grid(33,33,[30,60,10])
+    grid = Grid(33,33,[50,50,0])
 
     fig, ax = plt.subplots()
     colors_list = ['black', 'green', 'yellow', 'red']
