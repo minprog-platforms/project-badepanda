@@ -124,7 +124,7 @@ class WorldModel(Model):
                     # elif agent.has_eaten >= 2:
                     #     agent.energie = 5
                     #     agent.has_eaten = 0
-                    #     R = random.randint(0,1)
+                    #     R = random.randint(0,1) 
                     #     if R == 1:
                     #         x = self.random.randrange(self.grid.width)
                     #         y = random.choice([0, self.grid.height - 1])
