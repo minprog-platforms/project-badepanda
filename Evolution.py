@@ -1,3 +1,4 @@
+from numpy import isin
 from mesa import Agent, Model
 from mesa.time import SimultaneousActivation
 from mesa.space import MultiGrid
@@ -8,7 +9,7 @@ import random
 class FoodAgent(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-
+        self.is_eaten = 0
 class MannetjeAgent(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
@@ -18,7 +19,7 @@ class MannetjeAgent(Agent):
         # self.gen3 = gen3
         self.has_eaten = 0
 
-    def move_step(self):
+    def move(self):
         if self.energie > 0:
 
             possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
@@ -41,35 +42,13 @@ class MannetjeAgent(Agent):
             self.energie = self.energie - 1
 
 
-    def eat_(self):
-        if self.energie > 0 and self not in self.model.kill_list:
-            cellmates = self.model.grid.get_cell_list_contents([self.pos])
-            for other in cellmates:
-                if isinstance(other, FoodAgent) and other not in self.model.kill_list:
-                    self.model.kill_list.append(other)
-                    self.has_eaten += 1
-
-    def dead(self):
-        if self not in self.model.kill_list and self.has_eaten == 0:
-            print('hoi')
-            self.model.kill_list.append(self)
-
-    def new_day(self):
-        if self not in self.model.kill_list:
-            self.energie = 5
-            self.has_eaten = 0
-    
-    def procreate(self):
+    def eat(self):
         cellmates = self.model.grid.get_cell_list_contents([self.pos])
         for other in cellmates:
-            if isinstance(other, MannetjeAgent) and other not in self.model.kill_list:
-                P = random.random()
-                if P > 0.5:
-                    self.model.num_agents += 1
-                    mannentje = MannetjeAgent(self.model.num_agents, self.model)
-                    self.model.schedule.add(mannentje)
-                    self.model.grid.place_agent(mannentje, self.pos)
-
+            if isinstance(other, FoodAgent) and other.is_eaten == 0:
+                other.is_eaten = 1
+                self.has_eaten += 1
+    
     def step(self):
         self.move()
 
@@ -82,25 +61,20 @@ class WorldModel(Model):
         self.grid = MultiGrid(width, height, True)
         self.schedule = SimultaneousActivation(self)
         self.kill_list = []
-        self.procreate_list = []
         self.num_food = num_food
-        self.steps = 5
 
         for i in range(self.num_agents):
             mannetje = MannetjeAgent(i, self)
             self.schedule.add(mannetje)
-            x = self.random.randrange(self.grid.width)
-            y = self.random.randrange(self.grid.height)
+            R = random.randint(0,1)
+            if R == 1:
+                x = self.random.randrange(self.grid.width)
+                y = random.choice([0, height - 1])
+            elif R == 0:
+                x = random.choice([0, width - 1])
+                y = self.random.randrange(self.grid.height)
             self.grid.place_agent(mannetje, (x, y))
-
-    def despawn_food(self):
-        for cell in self.grid.coord_iter():
-            cell_content, x, y = cell
-            for agent in cell_content:
-                if isinstance(agent, FoodAgent) and agent not in self.kill_list:
-                    self.kill_list.append(agent)
-
-    def spawn_food(self):
+        
         for j in range(1, self.num_food + 1):
             self.num_agents = self.num_agents + j
             food = FoodAgent(self.num_agents, self)
@@ -109,17 +83,71 @@ class WorldModel(Model):
             y = self.random.randrange(self.grid.height)
             self.grid.place_agent(food, (x, y))
 
+        # self.spawn_food()
+    def energie(self):
+        energie = 0
+        for cell in self.grid.coord_iter():
+            cell_content, x, y = cell
+            for agent in cell_content:
+                if isinstance(agent, MannetjeAgent):
+                    energie += agent.energie
+        return energie
+
+    def despawn_food(self):
+        for cell in self.grid.coord_iter():
+            cell_content, x, y = cell
+            for agent in cell_content:
+                if isinstance(agent, FoodAgent):
+                    agent.is_eaten = 0
+                    x = self.random.randrange(self.grid.width)
+                    y = self.random.randrange(self.grid.height)
+                    self.grid.move_agent(agent, (x,y))
+
+    def new_day(self):
+        for cell in self.grid.coord_iter():
+            cell_content, x, y = cell
+            for agent in cell_content:
+                if isinstance(agent, MannetjeAgent):
+                    if agent.has_eaten == 0 and agent not in self.kill_list:
+                        self.kill_list.append(agent)
+                    elif agent.has_eaten == 1:
+                        agent.energie = 5
+                        agent.has_eaten = 0
+                        R = random.randint(0,1)
+                        if R == 1:
+                            x = self.random.randrange(self.grid.width)
+                            y = random.choice([0, self.grid.height - 1])
+                        elif R == 0:
+                            x = random.choice([0, self.grid.width - 1])
+                            y = self.random.randrange(self.grid.height)
+                        self.grid.move_agent(agent, (x,y))
+                    # elif agent.has_eaten >= 2:
+                    #     agent.energie = 5
+                    #     agent.has_eaten = 0
+                    #     R = random.randint(0,1)
+                    #     if R == 1:
+                    #         x = self.random.randrange(self.grid.width)
+                    #         y = random.choice([0, self.grid.height - 1])
+                    #     elif R == 0:
+                    #         x = random.choice([0, self.grid.width - 1])
+                    #         y = self.random.randrange(self.grid.height)
+                        # self.grid.move_agent(agent, (x,y))
+                        self.num_agents += 1
+                        mannentje = MannetjeAgent(self.num_agents, self)
+                        self.schedule.add(mannentje)
+                        self.grid.place_agent(mannentje, (x,y))
+
     def kill(self):
         for x in self.kill_list:
-            # print(x.unique_id, x)
             self.grid.remove_agent(x)
             self.schedule.remove(x)
             self.kill_list.remove(x)
 
     def step(self):
-        self.schedule.step_type(MannetjeAgent)
+        self.schedule.step()
+        return self.energie()
 
     def step_day(self):
-        self.spawn_food()
-        self.despawn_food()
+        self.new_day()
         self.kill()
+        self.despawn_food()
