@@ -1,6 +1,7 @@
+from turtle import speed
 from numpy import isin
 from mesa import Agent, Model
-from mesa.time import SimultaneousActivation
+from mesa.time import RandomActivation
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 from mesa.batchrunner import batch_run
@@ -10,18 +11,19 @@ class FoodAgent(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.is_eaten = 0
+
 class MannetjeAgent(Agent):
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, speed):
         super().__init__(unique_id, model)
-        self.energie = 10
+        self.energie = self.model.mannetje_energie
         # self.gen1 = gen1
         # self.gen2 = gen2
         # self.gen3 = gen3
         self.has_eaten = 0
+        self.speed = speed
 
-    def move(self):
-        if self.energie > 0:
-
+    def move(self, cost):
+        if self.energie - cost >= 0 and self.energie > 0:
             possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
             steps = []
 
@@ -39,7 +41,7 @@ class MannetjeAgent(Agent):
 
             new_position = self.random.choice(steps)
             self.model.grid.move_agent(self, new_position)
-            self.energie = self.energie - 1
+            self.energie = self.energie - cost
 
 
     def eat(self):
@@ -50,21 +52,24 @@ class MannetjeAgent(Agent):
                 self.has_eaten += 1
     
     def step(self):
-        self.move()
+        speed = self.speed + 1
+        cost = 2 ** self.speed
+        for i in range(speed):
+            self.move(cost)
+            self.eat()
 
-    def advance(self):
-        self.eat()
 class WorldModel(Model):
 
-    def __init__(self, mannetjes, num_food, width, height):
+    def __init__(self, mannetjes, num_food, num_energie, width, height):
         self.num_agents = mannetjes
         self.grid = MultiGrid(width, height, True)
-        self.schedule = SimultaneousActivation(self)
+        self.schedule = RandomActivation(self)
         self.kill_list = []
         self.num_food = num_food
+        self.mannetje_energie = num_energie
 
         for i in range(self.num_agents):
-            mannetje = MannetjeAgent(i, self)
+            mannetje = MannetjeAgent(i, self, 0)
             self.schedule.add(mannetje)
             R = random.randint(0,1)
             if R == 1:
@@ -90,7 +95,10 @@ class WorldModel(Model):
             cell_content, x, y = cell
             for agent in cell_content:
                 if isinstance(agent, MannetjeAgent):
-                    energie += agent.energie
+                    if agent.energie < 0:
+                        energie += 0
+                    else:
+                        energie += agent.energie
         return energie
 
     def despawn_food(self):
@@ -111,7 +119,7 @@ class WorldModel(Model):
                     if agent.has_eaten == 0 and agent not in self.kill_list:
                         self.kill_list.append(agent)
                     elif agent.has_eaten == 1:
-                        agent.energie = 10
+                        agent.energie = self.mannetje_energie
                         agent.has_eaten = 0
                         R = random.randint(0,1)
                         if R == 1:
@@ -122,7 +130,7 @@ class WorldModel(Model):
                             y = self.random.randrange(self.grid.height)
                         self.grid.move_agent(agent, (x,y))
                     elif agent.has_eaten >= 2:
-                        agent.energie = 10
+                        agent.energie = self.mannetje_energie
                         agent.has_eaten = 0
                         R = random.randint(0,1) 
                         if R == 1:
@@ -133,7 +141,12 @@ class WorldModel(Model):
                             y = self.random.randrange(self.grid.height)
                         self.grid.move_agent(agent, (x,y))
                         self.num_agents += 1
-                        mannentje = MannetjeAgent(self.num_agents, self)
+                        speed = agent.speed
+                        if speed == 0:
+                            speed = random.randint(0,1)
+                        else:
+                            speed = random.choices([speed - 1, speed, speed + 1], [1, 1, 1]).pop()
+                        mannentje = MannetjeAgent(self.num_agents, self, speed)
                         self.schedule.add(mannentje)
                         self.grid.place_agent(mannentje, (x,y))
 
