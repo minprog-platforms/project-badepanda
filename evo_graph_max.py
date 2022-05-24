@@ -4,24 +4,27 @@ import numpy as np
 import matplotlib.animation as animation
 from matplotlib import colors, image
 
-model = WorldModel(10, 363, 100, 33, 33)
-speedlist = []
+model = WorldModel(10, 165, 100, 33, 33)
+speedmax = []
+speedbest = []
 
-for dagen in range(500):
+for dagen in range(100):
     for i in range(1000):
         energie = model.step()
         if energie == 0:
             break
     speed = []
-    for cell in model.grid.coord_iter():
-        cell_content, x, y = cell
-        for agent in cell_content:
-            if isinstance(agent, MannetjeAgent):
-                speed.append(agent.speed)
+    keys = model.schedule._agents.keys()
+    for key in keys:
+        agent = model.schedule._agents[key]
+        if isinstance(agent, MannetjeAgent):
+            speed.append(agent.speed)
 
     model.step_day()
-    speedlist.append(max(speed))
+    speedmax.append(max(speed))
+    speedbest.append(max(set(speed), key=speed.count))
 
-plt.plot(speedlist)
+plt.plot(speedmax)
+plt.plot(speedbest)
 
 plt.show()
