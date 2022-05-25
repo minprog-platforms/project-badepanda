@@ -4,28 +4,60 @@ from mesa.space import ContinuousSpace
 from mesa.datacollection import DataCollector
 from mesa.batchrunner import batch_run
 import random
+import numpy as np
 
+
+def compute_altruism(model):
+    agent_altruism = [] 
+    for agent in model.schedule.agents:
+        if isinstance(agent, MannetjeAgent):
+            agent_altruism.append(agent.altruism)
+    mean = np.mean(agent_altruism)
+    return mean
+
+def compute_vision(model):
+    agent_vision = [] 
+    for agent in model.schedule.agents:
+        if isinstance(agent, MannetjeAgent):
+            agent_vision.append(agent.vision)
+    vision = dict((x,agent_vision.count(x)) for x in set(agent_vision))
+    return vision
+
+def compute_speed(model):
+    agent_speed = [] 
+    for agent in model.schedule.agents:
+        if isinstance(agent, MannetjeAgent):
+            agent_speed.append(agent.speed)
+    speed = dict((x,agent_speed.count(x)) for x in set(agent_speed))
+    return speed
+def compute_population(model):
+    mannetjes = 0
+    for agent in model.schedule.agents:
+        if isinstance(agent, MannetjeAgent):
+            mannetjes += 1
+    return mannetjes
 class FoodAgent(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.is_eaten = 0
 
 class MannetjeAgent(Agent):
-    def __init__(self, unique_id, model, speed, sense):
+    def __init__(self, unique_id, model, speed, vision, altruism):
         super().__init__(unique_id, model)
         self.energie = self.model.mannetje_energie
         self.has_eaten = 0
         self.speed = speed
-        # self.altruism = altruism
-        self.sense = sense
+        self.altruism = altruism
+        self.vision = vision
         self.size = 1
         self.plan = None
+        self.green_beard = True
 
     def move(self):
-        cost = self.speed ** 2
+        cost = (self.speed ** 2) + (self.vision ** 2)
         if self.energie - cost >= 0 and self.energie > 0:
             if self.plan is None:
-                neighbors = self.model.grid.get_neighbors(self.pos, radius=(self.sense * 10), include_center = False)
+                neighbors = self.model.grid.get_neighbors(self.pos, radius=self.vision, include_center = False)
                 food = []
                 for neighbor in neighbors:
                     if isinstance(neighbor, FoodAgent):
@@ -42,6 +74,7 @@ class MannetjeAgent(Agent):
             else:
                 food = self.plan
                 position = food.pos
+
             distance = self.model.grid.get_distance(self.pos, position)
 
             if distance <= self.speed:
@@ -76,9 +109,11 @@ class WorldModel(Model):
         self.born_list =[]
         self.num_food = num_food
         self.mannetje_energie = num_energie
+        self.datacollector = DataCollector(model_reporters={"Altruism": compute_altruism, "Speed": compute_speed , "Vision": compute_vision , "Totaal": compute_population})
 
         for i in range(self.num_agents):
-            mannetje = MannetjeAgent(i, self, 1,1)
+            altruism = random.randint(0,1)
+            mannetje = MannetjeAgent(i, self, 1, 1, altruism)
             self.schedule.add(mannetje)
             R = random.randint(0,1)
             if R == 1:
@@ -96,7 +131,8 @@ class WorldModel(Model):
             x = self.random.uniform(0,self.grid.width)
             y = self.random.uniform(0,self.grid.height)
             self.grid.place_agent(food, (x, y))
-
+        
+        
     def energie(self):
         energie = 0
         keys = self.schedule._agents.keys()
@@ -138,6 +174,11 @@ class WorldModel(Model):
                         y = self.random.uniform(0,self.grid.height)
                     self.grid.move_agent(agent, (x,y))
                 elif agent.has_eaten >= 2:
+                    if agent.has_eaten > 2 and agent.altruism == 1:
+                        for other in self.kill_list:
+                            if other.altruism == 1:
+                                self.kill_list.remove(other)
+                                break
                     agent.energie = self.mannetje_energie
                     agent.has_eaten = 0
                     R = random.randint(0,1) 
@@ -150,11 +191,18 @@ class WorldModel(Model):
                     self.grid.move_agent(agent, (x,y))
                     self.num_agents += 1
                     speed = agent.speed
+                    vision = agent.vision
                     if speed == 1:
                         speed = random.randint(1,2)
                     else:
                         speed = random.choices([speed - 1, speed, speed + 1], [1, 1, 1]).pop()
-                    mannentje = MannetjeAgent(self.num_agents, self, speed, 1)
+
+                    if vision == 1:
+                        vision = random.randint(1,2)
+                    else:
+                        vision = random.choices([vision - 1, vision, vision + 1], [1, 1, 1]).pop()
+                    
+                    mannentje = MannetjeAgent(self.num_agents, self, speed, vision, agent.altruism)
                     self.born_list.append(mannentje)
 
     def kill(self):
@@ -186,3 +234,4 @@ class WorldModel(Model):
         self.kill()
         self.born()
         self.despawn_food()
+        self.datacollector.collect(self)
