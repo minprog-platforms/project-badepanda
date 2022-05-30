@@ -20,7 +20,7 @@ def compute_vision(model):
     for agent in model.schedule.agents:
         if isinstance(agent, MannetjeAgent):
             agent_vision.append(agent.vision)
-    vision = dict((x,agent_vision.count(x)) for x in set(agent_vision))
+    vision = dict(("Vision {}".format(x),agent_vision.count(x)) for x in set(agent_vision))
     return vision
 
 def compute_speed(model):
@@ -28,8 +28,9 @@ def compute_speed(model):
     for agent in model.schedule.agents:
         if isinstance(agent, MannetjeAgent):
             agent_speed.append(agent.speed)
-    speed = dict((x,agent_speed.count(x)) for x in set(agent_speed))
+    speed = dict(("Speed {}".format(x),agent_speed.count(x)) for x in set(agent_speed))
     return speed
+
 def compute_population(model):
     mannetjes = 0
     for agent in model.schedule.agents:
@@ -101,7 +102,7 @@ class MannetjeAgent(Agent):
 
 class WorldModel(Model):
 
-    def __init__(self, mannetjes, num_food, num_energie, width, height):
+    def __init__(self, mannetjes, num_food, num_energie, width, height, green_beard):
         self.num_agents = mannetjes
         self.grid = ContinuousSpace(width, height, False)
         self.schedule = RandomActivation(self)
@@ -109,10 +110,14 @@ class WorldModel(Model):
         self.born_list =[]
         self.num_food = num_food
         self.mannetje_energie = num_energie
-        self.datacollector = DataCollector(model_reporters={"Altruism": compute_altruism, "Speed": compute_speed , "Vision": compute_vision , "Totaal": compute_population})
+        self.green_beard = green_beard
+        self.datacollector = DataCollector(model_reporters={"Totaal": compute_population, "Altruism": compute_altruism, "Speed": compute_speed , "Vision": compute_vision})
 
         for i in range(self.num_agents):
-            altruism = random.randint(0,1)
+            if i < 0.5*self.num_agents:
+                altruism = 0
+            else:
+                altruism = 1
             mannetje = MannetjeAgent(i, self, 1, 1, altruism)
             self.schedule.add(mannetje)
             R = random.randint(0,1)
@@ -176,9 +181,12 @@ class WorldModel(Model):
                 elif agent.has_eaten >= 2:
                     if agent.has_eaten > 2 and agent.altruism == 1:
                         for other in self.kill_list:
-                            if other.altruism == 1:
+                            if self.green_beard == 1:
+                                if other.altruism == 1:
+                                    self.kill_list.remove(other)
+                                    break
+                            elif self.green_beard == 0:
                                 self.kill_list.remove(other)
-                                break
                     agent.energie = self.mannetje_energie
                     agent.has_eaten = 0
                     R = random.randint(0,1) 
@@ -230,8 +238,9 @@ class WorldModel(Model):
         return self.energie()
 
     def step_day(self):
+        self.datacollector.collect(self)
         self.new_day()
         self.kill()
         self.born()
         self.despawn_food()
-        self.datacollector.collect(self)
+        
