@@ -4,12 +4,11 @@ import numpy as np
 import matplotlib.animation as animation
 from matplotlib import colors, image
 
-model = WorldModel(50, 99, 100, 33, 33)
-
+model = WorldModel(50, 99, 100, 33, 33, 1)
 fig, ax = plt.subplots()
-colors_list = ['green', 'orange', 'red', 'blue']
+colors_list = ['green', 'orange']
 cmap = colors.ListedColormap(colors_list)
-bounds = [0,1,2,3,4]
+bounds = [0,1,2]
 norm = colors.BoundaryNorm(bounds, cmap.N)
 ims = []
 
@@ -37,5 +36,5 @@ for i in range(1000):
     ims.append([im])
 
 ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True, repeat_delay=1000)
-
-plt.show()
+writergif = animation.PillowWriter(fps=30) 
+ani.save("Animation.gif",writer=writergif)
