@@ -1,46 +1,50 @@
-from evolution import *
+from evolution import WorldModel, Tiny_manAgent
 import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.animation as animation
-from matplotlib import colors, image
 import pandas as pd
 from collections import Counter
 
-model = WorldModel(10, 99, 100, 33, 33 , 1)
+# Make the world
+model = WorldModel(10, 250, 250, 100, 100, 1)
+# Loop for a x amount of days
 for dagen in range(365):
+    # Let the model step 1000 is arbitrary this stops when the man are out of energy
     for i in range(1000):
-        energie = model.step()
-        if energie == 0:
+        energy = model.step()
+        if energy < 0:
             break
     model.step_day()
-    model_data= model.datacollector.get_model_vars_dataframe()
+    # Collect data
+    model_data = model.datacollector.get_model_vars_dataframe()
 
+# At the and of the run we collect all the speed and vision data
 agent_vision = []
 agent_speed = []
-
 for agent in model.schedule.agents:
-        if isinstance(agent, MannetjeAgent):
-            agent_vision.append(agent.vision)
-            agent_speed.append(agent.speed)
+    if isinstance(agent, Tiny_manAgent):
+        agent_vision.append(agent.vision)
+        agent_speed.append(agent.speed)
 
+# Convert the data
 model_data = model_data.drop('Speed', 1).assign(**model_data.Speed.dropna().apply(pd.Series))
 model_data = model_data.drop('Vision', 1).assign(**model_data.Vision.dropna().apply(pd.Series))
 
-model = WorldModel(10, 99, 100, 33, 33, 0)
+# Run the whole simulation again for altruism without green beard
+model = WorldModel(10, 250, 250, 100, 100, 0)
 for dagen in range(365):
     for i in range(1000):
-        energie = model.step()
-        if energie == 0:
+        energy = model.step()
+        if energy < 0:
             break
     model.step_day()
     model_no_green_beard = model.datacollector.get_model_vars_dataframe()
 
+# Make some really nice graphs
 fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(model_data["Totaal"])
 axs[0, 0].set_title('Total population')
 axs[0, 0].set_ylabel('Total population')
 axs[0, 0].set_xlabel('Number of days')
-line1, = axs[0, 1].plot(model_data["Altruism"],label='Green Beard')
+line1, = axs[0, 1].plot(model_data["Altruism"], label='Green Beard')
 line2, = axs[0, 1].plot(model_no_green_beard["Altruism"], label='No Green Beard')
 axs[0, 1].set_title('Altruism')
 axs[0, 1].legend(handles=[line1, line2])
@@ -66,10 +70,9 @@ axs[1, 1].set_title('Vision')
 axs[1, 1].set_ylabel('Prevalence')
 axs[1, 1].set_xlabel('Number of days')
 
-# count the occurrences of each point
-c = Counter(zip(agent_speed,agent_vision))
-# create a list of the sizes, here multiplied by 10 for scale
-s = [10*c[(xx,yy)] for xx,yy in zip(agent_speed,agent_vision)]
+# Make a scatter plot of the speed and vision count with the size of the dot representing the amount the combination occurs
+c = Counter(zip(agent_speed, agent_vision))
+s = [10*c[(xx, yy)] for xx, yy in zip(agent_speed, agent_vision)]
 plt.figure(2)
 plt.scatter(agent_speed, agent_vision, s=s)
 plt.title('Speed/Vision tradeoff')
