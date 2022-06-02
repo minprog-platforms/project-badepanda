@@ -135,15 +135,15 @@ class WorldModel(Model):
                     if speed == 1:
                         speed = random.randint(1, 2)
                     else:
-                        speed = random.choices([speed - 1, speed, speed + 1], [1, 1, 1]).pop()
+                        speed = random.choices([speed - 1, speed, speed + 1], [1, 1, 1]).pop() # Remove speed - 1 to make selfish gene
 
                     if vision == 1:
                         vision = random.randint(1, 2)
                     else:
-                        vision = random.choices([vision - 1, vision, vision + 1], [1, 1, 1]).pop()
+                        vision = random.choices([vision - 1, vision, vision + 1], [1, 1, 1]).pop() # Remove vision - 1 to make selfish gene
 
-                    mannentje = Tiny_manAgent(self.num_agents, self, speed, vision, agent.altruism)
-                    self.born_list.append(mannentje)
+                    Tiny_man = Tiny_manAgent(self.num_agents, self, speed, vision, agent.altruism)
+                    self.born_list.append(Tiny_man)
 
     # Remove agents from the simulation
     def kill(self):
