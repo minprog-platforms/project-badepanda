@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 from matplotlib import colors
 
 # Make the world
-model = WorldModel(10, 250, 250, 100, 100, 1)
+model = WorldModel(50, 250, 250, 100, 100, 1)
 # Loop for a x amount of days
 for dagen in range(1):
     # Let the model step 1000 is arbitrary this stops when the man are out of energy
@@ -49,6 +49,7 @@ for i in range(1000):
     ims.append([im])
 
 # Make animation and save it
-ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True, repeat_delay=1000)
+ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True, repeat_delay=10)
 writergif = animation.PillowWriter(fps=30)
-ani.save("Animation10days.gif", writer=writergif)
+ani.save("Animation1day.gif", writer=writergif)
+plt.show()

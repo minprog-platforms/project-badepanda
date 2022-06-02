@@ -6,7 +6,7 @@ from collections import Counter
 # Make the world
 model = WorldModel(10, 250, 250, 100, 100, 1)
 # Loop for a x amount of days
-for dagen in range(150):
+for dagen in range(100):
     # Let the model step 1000 is arbitrary this stops when the man are out of energy
     for i in range(1000):
         energy = model.step()
@@ -30,7 +30,7 @@ model_data = model_data.drop('Vision', 1).assign(**model_data.Vision.dropna().ap
 
 # Run the whole simulation again for altruism without green beard
 model = WorldModel(10, 250, 250, 100, 100, 0)
-for dagen in range(150):
+for dagen in range(100):
     for i in range(1000):
         energy = model.step()
         if energy < 0:
